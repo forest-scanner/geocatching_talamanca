@@ -6,8 +6,8 @@ from streamlit.components.v1 import html
 st.set_page_config(layout="wide")
 st.title("Geocaching en Talamanca de Jarama")
 
-# Crear mapa centrado en Talamanca de Jarama
-m = folium.Map(location=[40.748, -3.511], zoom_start=16)
+# Crear mapa centrado en Talamanca de Jarama con las nuevas coordenadas
+m = folium.Map(location=[40.750, -3.515], zoom_start=15)
 
 # Link único del Google Form
 google_form_link = "https://docs.google.com/forms/d/e/1FAIpQLSdMk3kx-qkhmXvhBpI0m0Fo-EImLBDChoFP5oXf3gq4JokdnQ/viewform?usp=dialog"
@@ -15,61 +15,61 @@ google_form_link = "https://docs.google.com/forms/d/e/1FAIpQLSdMk3kx-qkhmXvhBpI0
 # URL base para las imágenes en GitHub
 github_image_base = "https://raw.githubusercontent.com/forest-scanner/geocatching_talamanca/main/"
 
-# Lista de tesoros con pistas actualizadas e imágenes
+# Lista de tesoros con coordenadas actualizadas
 tesoros = [
     {
         "nombre": "Puente de Madera",
-        "lat": 40.7482, 
-        "lon": -3.5105,
+        "lat": 40.75454145141272, 
+        "lon": -3.5166748600339512,
         "pista": "<h4>En el puente de madera sobre el cauce de riego del río Jarama, busca en las oquedades de un árbol cercano al río.</h4>",
         "imagen": "lugar1.JPG"
     },
     {
         "nombre": "Puente Romano", 
-        "lat": 40.7486, 
-        "lon": -3.5120,
+        "lat": 40.750975092294915, 
+        "lon": -3.5197053896261923,
         "pista": "<h4>En el antiguo puente romano, busca los lugares donde se pagaba el peaje en la antigüedad.</h4>",
         "imagen": "lugar2.JPG"
     },
     {
         "nombre": "Zona Deportiva",
-        "lat": 40.7478, 
-        "lon": -3.5112,
+        "lat": 40.7491635912311, 
+        "lon": -3.516954501691597,
         "pista": "<h4>Lugar donde mayores y no tan mayores practican ejercicio estático: bicicletas y remo sin moverse del sitio.</h4>",
         "imagen": "lugar3.JPG"
     },
     {
         "nombre": "Bosque de Olivos",
-        "lat": 40.7489, 
-        "lon": -3.5098,
+        "lat": 40.746844291501326, 
+        "lon": -3.5147752238552545,
         "pista": "<h4>Bosque de olivos centenarios frente a la Cartuja de Talamanca. La Cartuja es una finca del siglo XVI que conserva la memoria arquitectónica y cultural de los frailes cartujos del Monasterio de El Paular.</h4>",
         "imagen": "lugar4.JPG"
     },
     {
         "nombre": "Adivinanza 1",
-        "lat": 40.7475, 
-        "lon": -3.5100,
+        "lat": 40.74546455716086, 
+        "lon": -3.5119383775703725,
         "pista": "<h4>Vuelo sin alas, corro sin pies, bajo por un cable, ¿sabes quién es? (Busca el juego infantil que se desliza por un cable)</h4>",
         "imagen": "lugar5.JPG"
     },
     {
         "nombre": "Adivinanza 2", 
-        "lat": 40.7484, 
-        "lon": -3.5115,
+        "lat": 40.74530341700391, 
+        "lon": -3.5125995134186145,
         "pista": "<h4>En el centro del patio mi canto despierta, brota del mármol el agua que acierta. No tengo garganta, pero murmuro, soy vieja y clara, espejo seguro. (Busca la fuente antigua)</h4>",
         "imagen": "lugar6.JPG"
     },
     {
         "nombre": "Fragmento Histórico",
-        "lat": 40.7487, 
-        "lon": -3.5122,
+        "lat": 40.746441858564744, 
+        "lon": -3.51212759972465,
         "pista": "<h4>Fragmento de piedra que guarda silencio, cicatriz del tiempo sobre la tierra. Fuiste muralla, guardiana de sueños, hoy sólo el viento te ronda y te nombra. (Busca los restos de la antigua muralla)</h4>",
         "imagen": "lugar7.JPG"
     },
     {
         "nombre": "Ermita de los Milagros",
-        "lat": 40.7492, 
-        "lon": -3.5128,
+        "lat": 40.745798790221286, 
+        "lon": -3.513361041851946,
         "pista": "<h4>Pequeña y sola, guarda su canto, piedra que reza al paso del tiempo. Su ábside mira al valle en silencio, y en cada grieta duerme un milagro.</h4>",
         "imagen": "lugar8.JPG"
     }
@@ -141,4 +141,6 @@ st.sidebar.markdown(f"""
 [Acceder al formulario de tesoros encontrados]({google_form_link})
 """)
 
-
+# Añadir un pequeño footer
+st.sidebar.markdown("---")
+st.sidebar.markdown("*Geocaching Talamanca de Jarama - ¡Disfruta explorando!*")
