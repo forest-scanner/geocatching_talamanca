@@ -1,6 +1,7 @@
 import streamlit as st
 import folium
 from streamlit.components.v1 import html
+import json
 
 # Configuración de la app
 st.set_page_config(
@@ -31,56 +32,56 @@ tesoros = [
         "nombre": "Puente de Madera",
         "lat": 40.75454145141272, 
         "lon": -3.5166748600339512,
-        "pista": "<h4>En el puente de madera sobre el cauce de riego del río Jarama, busca en las oquedades de un árbol cercano al río.</h4>",
+        "pista": "En el puente de madera sobre el cauce de riego del río Jarama, busca en las oquedades de un árbol cercano al río.",
         "imagen": "lugar1.jpg"
     },
     {
         "nombre": "Puente Romano", 
         "lat": 40.750975092294915, 
         "lon": -3.5197053896261923,
-        "pista": "<h4>En el antiguo puente romano, busca los lugares donde se pagaba el peaje en la antigüedad.</h4>",
+        "pista": "En el antiguo puente romano, busca los lugares donde se pagaba el peaje en la antigüedad.",
         "imagen": "lugar2.jpg"
     },
     {
         "nombre": "El Ancla",
         "lat": 40.7491635912311, 
         "lon": -3.516954501691597,
-        "pista": "<h4>De hierro nací, mas tengo alma de espera, amé un azul que ya no me espera. Sin agua respiro, sin olas suspiro, atada a la tierra, sueño mi retiro. ¿Qué soy, que sin rumbo ni amar, muero quieta, queriendo anclar?</h4>",
+        "pista": "De hierro nací, mas tengo alma de espera, amé un azul que ya no me espera. Sin agua respiro, sin olas suspiro, atada a la tierra, sueño mi retiro. ¿Qué soy, que sin rumbo ni amar, muero quieta, queriendo anclar?",
         "imagen": "lugar3.jpg"
     },
     {
         "nombre": "Bosque de Olivos",
         "lat": 40.746844291501326, 
         "lon": -3.5147752238552545,
-        "pista": "<h4>Bosque de olivos centenarios frente a la Cartuja de Talamanca. La Cartuja es una finca del siglo XVI que conserva la memoria arquitectónica y cultural de los frailes cartujos del Monasterio de El Paular.</h4>",
+        "pista": "Bosque de olivos centenarios frente a la Cartuja de Talamanca. La Cartuja es una finca del siglo XVI que conserva la memoria arquitectónica y cultural de los frailes cartujos del Monasterio de El Paular.",
         "imagen": "lugar4.jpg"
     },
     {
         "nombre": "Adivinanza 1",
         "lat": 40.74546455716086, 
         "lon": -3.5119383775703725,
-        "pista": "<h4>Vuelo sin alas, corro sin pies, bajo por un cable, ¿sabes quién es? (Busca el juego infantil que se desliza por un cable)</h4>",
+        "pista": "Vuelo sin alas, corro sin pies, bajo por un cable, ¿sabes quién es? (Busca el juego infantil que se desliza por un cable)",
         "imagen": "lugar5.jpg"
     },
     {
         "nombre": "Adivinanza 2", 
         "lat": 40.74530341700391, 
         "lon": -3.5125995134186145,
-        "pista": "<h4>En el centro del patio mi canto despierta, brota del mármol el agua que acierta. No tengo garganta, pero murmuro, soy vieja y clara, espejo seguro. (Busca la fuente antigua)</h4>",
+        "pista": "En el centro del patio mi canto despierta, brota del mármol el agua que acierta. No tengo garganta, pero murmuro, soy vieja y clara, espejo seguro. (Busca la fuente antigua)",
         "imagen": "lugar6.jpg"
     },
     {
         "nombre": "Fragmento Histórico",
         "lat": 40.746441858564744, 
         "lon": -3.51212759972465,
-        "pista": "<h4>Fragmento de piedra que guarda silencio, cicatriz del tiempo sobre la tierra. Fuiste muralla, guardiana de sueños, hoy sólo el viento te ronda y te nombra. (Busca los restos de la antigua muralla)</h4>",
+        "pista": "Fragmento de piedra que guarda silencio, cicatriz del tiempo sobre la tierra. Fuiste muralla, guardiana de sueños, hoy sólo el viento te ronda y te nombra. (Busca los restos de la antigua muralla)",
         "imagen": "lugar7.jpg"
     },
     {
         "nombre": "Ermita de los Milagros",
         "lat": 40.745798790221286, 
         "lon": -3.513361041851946,
-        "pista": "<h4>Pequeña y sola, guarda su canto, piedra que reza al paso del tiempo. Su ábside mira al valle en silencio, y en cada grieta duerme un milagro.</h4>",
+        "pista": "Pequeña y sola, guarda su canto, piedra que reza al paso del tiempo. Su ábside mira al valle en silencio, y en cada grieta duerme un milagro.",
         "imagen": "lugar8.jpg"
     }
 ]
@@ -90,16 +91,30 @@ for t in tesoros:
     gmaps_link = f"https://www.google.com/maps/dir/?api=1&destination={t['lat']},{t['lon']}"
     image_url = f"{github_image_base}{t['imagen']}"
     
+    # HTML mejorado para popups móviles
     popup_html = f"""
-    <div style="width: 350px; max-width: 90vw;">
-        <b style="font-size: 16px;">{t['nombre']}</b><br><br>
-        <div style="text-align: center; margin-bottom: 10px;">
-            <img src="{image_url}" alt="{t['nombre']}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd;">
+    <div style="width: 95vw; max-width: 400px; font-family: Arial, sans-serif;">
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px 8px 0 0; border-bottom: 2px solid #dee2e6;">
+            <h3 style="margin: 0; color: #333; font-size: 18px; text-align: center;">{t['nombre']}</h3>
         </div>
-        {t['pista']}
-        <div style="margin-top: 15px; text-align: center;">
-            <a href='{gmaps_link}' target='_blank' style='background-color: #4CAF50; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block; margin-right: 10px; margin-bottom: 5px;'>Ir aquí</a>
-            <a href='{google_form_link}' target='_blank' style='background-color: #2196F3; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block; margin-bottom: 5px;'>Marcar como encontrado</a>
+        
+        <div style="padding: 15px;">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <img src="{image_url}" alt="{t['nombre']}" style="width: 100%; max-height: 180px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd;">
+            </div>
+            
+            <div style="background-color: #e9ecef; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                <p style="margin: 0; color: #495057; font-size: 16px; line-height: 1.4; text-align: left;">{t['pista']}</p>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <a href='{gmaps_link}' target='_blank' style='background-color: #28a745; color: white; padding: 12px; text-decoration: none; border-radius: 6px; text-align: center; font-size: 16px; font-weight: bold;'>
+                    📍 Ir aquí con Google Maps
+                </a>
+                <a href='{google_form_link}' target='_blank' style='background-color: #007bff; color: white; padding: 12px; text-decoration: none; border-radius: 6px; text-align: center; font-size: 16px; font-weight: bold;'>
+                    ✅ Marcar como encontrado
+                </a>
+            </div>
         </div>
     </div>
     """
@@ -109,38 +124,154 @@ for t in tesoros:
     
     folium.Marker(
         location=[t["lat"], t["lon"]],
-        popup=folium.Popup(popup_html, max_width=400),
+        popup=folium.Popup(popup_html, max_width=500),  # Aumentamos el max_width
         icon=folium.Icon(color=icon_color, icon="flag", prefix="fa")
     ).add_to(m)
 
-# CSS personalizado para hacer el mapa responsive
+# Añadir funcionalidad para mostrar ubicación actual
+location_script = """
+<script>
+// Función para obtener la ubicación actual
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition, showError, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
+        });
+    } else {
+        alert("La geolocalización no es compatible con este navegador.");
+    }
+}
+
+// Función para mostrar la posición en el mapa
+function showPosition(position) {
+    var lat = position.coords.latitude;
+    var lon = position.coords.longitude;
+    
+    // Eliminar marcador anterior si existe
+    if (window.currentLocationMarker) {
+        window.map.removeLayer(window.currentLocationMarker);
+    }
+    
+    // Crear un marcador para la ubicación actual
+    window.currentLocationMarker = L.marker([lat, lon], {
+        icon: L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        })
+    }).addTo(window.map);
+    
+    // Añadir popup al marcador
+    window.currentLocationMarker.bindPopup("<b>¡Estás aquí!</b><br>Tu ubicación actual<br><small>Lat: " + lat.toFixed(6) + "<br>Lon: " + lon.toFixed(6) + "</small>");
+    
+    // Centrar el mapa en la ubicación actual con zoom más cercano
+    window.map.setView([lat, lon], 16);
+    
+    // Mostrar notificación de éxito
+    alert("Ubicación encontrada! Se ha añadido un marcador verde en tu posición.");
+}
+
+// Función para manejar errores de geolocalización
+function showError(error) {
+    var errorMessage;
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            errorMessage = "Debes permitir el acceso a tu ubicación para usar esta función.";
+            break;
+        case error.POSITION_UNAVAILABLE:
+            errorMessage = "La información de ubicación no está disponible.";
+            break;
+        case error.TIMEOUT:
+            errorMessage = "La solicitud para obtener la ubicación ha caducado.";
+            break;
+        case error.UNKNOWN_ERROR:
+            errorMessage = "Ocurrió un error desconocido al obtener la ubicación.";
+            break;
+    }
+    alert("Error: " + errorMessage);
+}
+
+// Ejecutar cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Añadir botón para obtener ubicación
+    var button = document.createElement('button');
+    button.innerHTML = '📍 Mostrar mi ubicación';
+    button.style.position = 'absolute';
+    button.style.top = '10px';
+    button.style.right = '10px';
+    button.style.zIndex = '1000';
+    button.style.padding = '12px 15px';
+    button.style.backgroundColor = '#28a745';
+    button.style.color = 'white';
+    button.style.border = 'none';
+    button.style.borderRadius = '6px';
+    button.style.cursor = 'pointer';
+    button.style.fontSize = '14px';
+    button.style.fontWeight = 'bold';
+    button.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+    button.onclick = getLocation;
+    
+    // Añadir el botón al mapa
+    var mapContainer = document.querySelector('.folium-map') || document.getElementById('map-container');
+    if (mapContainer) {
+        mapContainer.style.position = 'relative';
+        mapContainer.appendChild(button);
+    }
+    
+    // Guardar referencia al mapa globalmente
+    setTimeout(function() {
+        window.map = window.map || document.querySelector('.folium-map')._leaflet_map;
+    }, 1000);
+});
+</script>
+"""
+
+# CSS personalizado mejorado para móviles
 responsive_css = """
 <style>
 /* Hacer que el mapa ocupe toda la pantalla en móviles */
 @media (max-width: 768px) {
     .main .block-container {
-        padding-top: 1rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
-        padding-bottom: 1rem;
+        padding-top: 0.5rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        padding-bottom: 0.5rem;
     }
     
     /* Asegurar que el iframe del mapa ocupe toda la pantalla */
     iframe {
-        height: 80vh !important;
-        min-height: 500px;
+        height: 85vh !important;
+        min-height: 450px;
     }
     
     /* Ajustar el título para móviles */
     h1 {
-        font-size: 1.5rem !important;
+        font-size: 1.4rem !important;
+        text-align: center;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Mejorar los popups de Folium en móviles */
+    .leaflet-popup-content {
+        width: auto !important;
+        margin: 10px !important;
+    }
+    
+    .leaflet-popup-content-wrapper {
+        border-radius: 10px !important;
+        max-width: 95vw !important;
     }
 }
 
-/* Mejorar la visualización en pantallas pequeñas */
+/* Mejorar la visualización en pantallas muy pequeñas */
 @media (max-width: 480px) {
     iframe {
-        height: 75vh !important;
+        height: 80vh !important;
         min-height: 400px;
     }
     
@@ -149,20 +280,41 @@ responsive_css = """
         min-width: 100% !important;
         max-width: 100% !important;
     }
+    
+    /* Botón de ubicación más pequeño en móviles muy pequeños */
+    button {
+        font-size: 12px !important;
+        padding: 10px 12px !important;
+    }
 }
 
 /* Asegurar que el mapa sea responsive */
 .map-container {
     width: 100%;
     height: 100%;
+    position: relative;
+}
+
+/* Mejorar la legibilidad general */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Botones más grandes para móviles */
 @media (max-width: 768px) {
     .stButton button {
         width: 100%;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
+        padding: 12px !important;
+        font-size: 16px !important;
     }
+}
+
+/* Mejorar los enlaces en los popups para móviles */
+.leaflet-popup-content a {
+    font-size: 16px !important;
+    padding: 12px !important;
+    margin: 5px 0 !important;
 }
 </style>
 """
@@ -173,15 +325,27 @@ st.markdown(responsive_css, unsafe_allow_html=True)
 # Convertir mapa a HTML para mostrar en Streamlit
 map_html = m._repr_html_()
 
-# Envolver el mapa en un contenedor responsive
+# Envolver el mapa en un contenedor con ID para el script
 responsive_map_html = f"""
-<div class="map-container">
+<div id="map-container" class="map-container">
 {map_html}
 </div>
+{location_script}
 """
 
 # Mostrar el mapa con configuración responsive
 html(responsive_map_html, height=700)
+
+# Información sobre la funcionalidad de ubicación
+st.sidebar.markdown("### 📍 Mi Ubicación")
+st.sidebar.markdown("""
+Usa el botón **📍 Mostrar mi ubicación** en el mapa para:
+- Ver tu posición actual con un marcador verde
+- Centrar el mapa en tu ubicación
+- Comparar tu posición con los tesoros
+
+*Nota: Debes permitir el acceso a la ubicación cuando tu navegador lo solicite.*
+""")
 
 # Información adicional en un expander para ahorrar espacio en móviles
 with st.sidebar:
@@ -197,13 +361,13 @@ with st.sidebar:
     
     with st.expander("📍 Tesoros Disponibles", expanded=False):
         st.markdown("""
-        - Puente de Madera
-        - Puente Romano  
-        - El Ancla
-        - Bosque de Olivos
-        - Adivinanza 1 (juego infantil)
-        - Adivinanza 2 (fuente)
-        - Fragmento Histórico (muralla)
+        - **Puente de Madera** - Río Jarama
+        - **Puente Romano** - Peaje histórico  
+        - **El Ancla** - Adivinanza
+        - **Bosque de Olivos** - Cartuja
+        - **Adivinanza 1** - Juego infantil
+        - **Adivinanza 2** - Fuente antigua
+        - **Fragmento Histórico** - Muralla
         - **Ermita de los Milagros** ✨
         """)
     
@@ -217,6 +381,7 @@ with st.sidebar:
 # Añadir un pequeño footer
 st.sidebar.markdown("---")
 st.sidebar.markdown("*Geocaching Talamanca de Jarama - ¡Disfruta explorando!*")
+
 
 
 
