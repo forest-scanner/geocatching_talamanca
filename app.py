@@ -1,6 +1,5 @@
 import streamlit as st
 import folium
-from folium.plugins import LocateControl
 from streamlit.components.v1 import html
 
 # Configuración de la app
@@ -19,17 +18,6 @@ m = folium.Map(
     control_scale=True,
     tiles='OpenStreetMap'
 )
-
-# Añadir control de localización personalizado
-LocateControl(
-    auto_start=False,
-    draw_circle=True,
-    show_popup=True,
-    strings={
-        "title": "Mostrar mi ubicación",
-        "popup": "¡Estás aquí!"
-    }
-).add_to(m)
 
 # Link único del Google Form
 google_form_link = "https://docs.google.com/forms/d/e/1FAIpQLSdMk3kx-qkhmXvhBpI0m0Fo-EImLBDChoFP5oXf3gq4JokdnQ/viewform?usp=dialog"
@@ -218,6 +206,23 @@ body {
     padding: 12px !important;
     margin: 5px 0 !important;
 }
+
+/* Botón de ubicación fijo */
+.location-button {
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    z-index: 1000 !important;
+    padding: 12px 15px !important;
+    background-color: #28a745 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+}
 </style>
 """
 
@@ -227,33 +232,207 @@ st.markdown(responsive_css, unsafe_allow_html=True)
 # Convertir mapa a HTML para mostrar en Streamlit
 map_html = m._repr_html_()
 
-# Envolver el mapa en un contenedor
-responsive_map_html = f"""
+# Script JavaScript simplificado y mejorado
+gps_script = """
+<script>
+// Función para obtener la ubicación
+function getLocation() {
+    if (navigator.geolocation) {
+        // Cambiar texto del botón
+        var button = document.getElementById('gps-button');
+        if (button) {
+            button.innerHTML = '🔄 Buscando...';
+            button.disabled = true;
+        }
+        
+        // Obtener ubicación
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                showPosition(position);
+                // Restaurar botón
+                if (button) {
+                    button.innerHTML = '📍 Mi Ubicación';
+                    button.disabled = false;
+                }
+            },
+            function(error) {
+                handleLocationError(error);
+                // Restaurar botón
+                if (button) {
+                    button.innerHTML = '📍 Mi Ubicación';
+                    button.disabled = false;
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 60000
+            }
+        );
+    } else {
+        alert("Tu navegador no soporta geolocalización.");
+    }
+}
+
+// Mostrar posición en el mapa
+function showPosition(position) {
+    var lat = position.coords.latitude;
+    var lon = position.coords.longitude;
+    
+    // Buscar el mapa de Leaflet
+    var mapElements = document.getElementsByClassName('folium-map');
+    if (mapElements.length === 0) {
+        alert("No se pudo encontrar el mapa. Recarga la página.");
+        return;
+    }
+    
+    var map = mapElements[0]._leaflet_map;
+    
+    // Eliminar marcador anterior si existe
+    if (window.currentLocationMarker) {
+        map.removeLayer(window.currentLocationMarker);
+    }
+    
+    // Crear icono personalizado
+    var greenIcon = L.divIcon({
+        html: '<div style="background-color: green; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5);"></div>',
+        iconSize: [20, 20],
+        className: 'current-location-marker'
+    });
+    
+    // Añadir marcador
+    window.currentLocationMarker = L.marker([lat, lon], {icon: greenIcon}).addTo(map);
+    
+    // Añadir círculo de precisión
+    var accuracy = position.coords.accuracy;
+    L.circle([lat, lon], {
+        color: 'green',
+        fillColor: '#30c230',
+        fillOpacity: 0.2,
+        radius: accuracy
+    }).addTo(map);
+    
+    // Centrar mapa en la ubicación
+    map.setView([lat, lon], 16);
+    
+    // Mostrar popup
+    window.currentLocationMarker.bindPopup(
+        '<b>¡Estás aquí!</b><br>' +
+        'Lat: ' + lat.toFixed(6) + '<br>' +
+        'Lon: ' + lon.toFixed(6)
+    ).openPopup();
+    
+    console.log("Ubicación encontrada: " + lat + ", " + lon);
+}
+
+// Manejar errores
+function handleLocationError(error) {
+    var message;
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            message = "Permiso de ubicación denegado. Por favor, permite el acceso a tu ubicación en la configuración del navegador.";
+            break;
+        case error.POSITION_UNAVAILABLE:
+            message = "Información de ubicación no disponible.";
+            break;
+        case error.TIMEOUT:
+            message = "Tiempo de espera agotado al buscar la ubicación.";
+            break;
+        default:
+            message = "Error desconocido al obtener la ubicación.";
+    }
+    alert("Error: " + message);
+}
+
+// Añadir botón al mapa
+function addLocationButton() {
+    // Esperar a que el mapa se cargue
+    setTimeout(function() {
+        var mapContainer = document.querySelector('.folium-map');
+        if (mapContainer) {
+            // Crear botón
+            var button = document.createElement('button');
+            button.id = 'gps-button';
+            button.className = 'location-button';
+            button.innerHTML = '📍 Mi Ubicación';
+            button.onclick = getLocation;
+            
+            // Añadir botón al mapa
+            mapContainer.appendChild(button);
+            console.log("Botón de ubicación añadido");
+        } else {
+            // Reintentar si no se encuentra el mapa
+            setTimeout(addLocationButton, 500);
+        }
+    }, 1000);
+}
+
+// Iniciar cuando se carga la página
+document.addEventListener('DOMContentLoaded', addLocationButton);
+</script>
+"""
+
+# Combinar mapa HTML con el script
+full_map_html = f"""
 <div class="map-container">
 {map_html}
 </div>
+{gps_script}
 """
 
-# Mostrar el mapa con configuración responsive
-html(responsive_map_html, height=700)
+# Mostrar el mapa
+html(full_map_html, height=700, scrolling=False)
 
-# Información sobre la funcionalidad de ubicación
-st.sidebar.markdown("### 📍 Mi Ubicación")
+# Botón alternativo en Streamlit por si falla el JavaScript
+st.sidebar.markdown("### 📍 Alternativa para GPS")
 st.sidebar.markdown("""
-**Cómo usar la ubicación:**
+Si el botón de ubicación en el mapa no funciona, puedes:
 
-Haz clic en el botón de ubicación (el círculo con una flecha) en el mapa para:
-- Activar la geolocalización
-- Centrar el mapa en tu ubicación actual
-- Ver un marcador con tu posición
+1. **Abrir Google Maps** para ver tu ubicación actual
+2. **Comparar manualmente** con los marcadores del mapa
+3. **Usar una app de mapas** externa para navegación
 
-**Si no funciona:**
-- Asegúrate de tener el GPS activado
+**Solución de problemas:**
+- Asegúrate de que tu GPS esté activado
 - Verifica los permisos de ubicación en tu navegador
-- Comprueba que estás en un entorno HTTPS (necesario para geolocalización)
+- Intenta en un área con mejor señal
 """)
 
-# ... (el resto del sidebar)
+# Información adicional en el sidebar
+with st.sidebar:
+    with st.expander("🗺️ Instrucciones del Geocaching", expanded=False):
+        st.markdown("""
+        1. **Haz clic en cualquier marcador** para ver la pista y una imagen del lugar
+        2. **Usa el botón 'Ir aquí'** para abrir Google Maps 
+        3. **Busca el tesoro** en la ubicación indicada
+        4. **Marca como encontrado** cuando lo encuentres
+
+        **Recuerda:** Los tesoros pueden ser pequeños objetos o códigos QR.
+        """)
+    
+    with st.expander("📍 Tesoros Disponibles", expanded=False):
+        st.markdown("""
+        - **Puente de Madera** - Río Jarama
+        - **Puente Romano** - Peaje histórico  
+        - **El Ancla** - Adivinanza
+        - **Bosque de Olivos** - Cartuja
+        - **Adivinanza 1** - Juego infantil
+        - **Adivinanza 2** - Fuente antigua
+        - **Fragmento Histórico** - Muralla
+        - **Ermita de los Milagros** ✨
+        """)
+    
+    with st.expander("📝 Formulario", expanded=False):
+        st.markdown(f"""
+        Usa el mismo formulario para marcar cualquier tesoro como encontrado.
+        
+        [Acceder al formulario]({google_form_link})
+        """)
+
+# Añadir un pequeño footer
+st.sidebar.markdown("---")
+st.sidebar.markdown("*Geocaching Talamanca de Jarama - ¡Disfruta explorando!*")
+
 
 
 
