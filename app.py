@@ -10,48 +10,87 @@ st.title("Geocaching en Talamanca de Jarama")
 m = folium.Map(location=[40.748, -3.511], zoom_start=16)
 
 # Link base del Google Form
-google_form_link = "https://docs.google.com/forms/d/1IjqaIbFe7ZZWdIJ4acgxYhxWQtu5vC7kdmYYsgYcPNg/preview"
+google_form_link = "https://docs.google.com/forms/d/1IjqaIbFe7ZZWdIJ4acgxYhxWQtu5vC7kdmYYsgYcPNg/prefill"
 
-# Lista de tesoros con 10 pistas (letra más grande con <h4>)
+# Lista de tesoros con pistas actualizadas
 tesoros = [
-    {"nombre": "Pista 1", "lat": 40.7482, "lon": -3.5105,
-     "pista": "<h4>El tiburón está en el agua, ¿verdad? Busca un puente de madera...</h4>"},
-    {"nombre": "Pista 2", "lat": 40.7486, "lon": -3.5120,
-     "pista": "<h4>Este secreto es muy antiguo... busca lo más antiguo de la zona verde, estará por debajo.</h4>"},
-    {"nombre": "Pista 3", "lat": 40.7478, "lon": -3.5112,
-     "pista": "<h4>Esto lo usan los mayores... ¿dónde van los mayores a hacer ejercicio?</h4>"},
-    {"nombre": "Pista 4", "lat": 40.7489, "lon": -3.5098,
-     "pista": "<h4>Busca un bosque de olivos frente a un edificio emblemático.</h4>"},
-    {"nombre": "Pista 5", "lat": 40.7475, "lon": -3.5100,
-     "pista": "<h4>Una pelota para lanzarte y avanzar muchos metros en pocos segundos...</h4>"},
-    {"nombre": "Pista 6", "lat": 40.7484, "lon": -3.5115,
-     "pista": "<h4>Esto dicen que da suerte si lo resuelves. Igual que algo que echa agua.</h4>"},
-    {"nombre": "Pista 7", "lat": 40.7487, "lon": -3.5122,
-     "pista": "<h4>Búsqueda de milagro: busca tu milagro monumental.</h4>"},
-    {"nombre": "Pista 8", "lat": 40.7476, "lon": -3.5095,
-     "pista": "<h4>Un lugar donde te harás soñar y ver las estrellas como está.</h4>"},
-    {"nombre": "Pista 9", "lat": 40.7480, "lon": -3.5125,
-     "pista": "<h4>Donde los romanos han estado, nosotros también estamos protegiéndonos.</h4>"},
-    {"nombre": "Pista 10", "lat": 40.7479, "lon": -3.5090,
-     "pista": "<h4>Lugar donde se hace deporte con amigos, encontrarás la pulsera de la amistad.</h4>"},
+    {
+        "nombre": "Puente de Madera",
+        "lat": 40.7482, 
+        "lon": -3.5105,
+        "pista": "<h4>En el puente de madera sobre el cauce de riego del río Jarama, busca en las oquedades de un árbol cercano al río.</h4>"
+    },
+    {
+        "nombre": "Puente Romano", 
+        "lat": 40.7486, 
+        "lon": -3.5120,
+        "pista": "<h4>En el antiguo puente romano, busca los lugares donde se pagaba el peaje en la antigüedad.</h4>"
+    },
+    {
+        "nombre": "Zona Deportiva",
+        "lat": 40.7478, 
+        "lon": -3.5112,
+        "pista": "<h4>Lugar donde mayores y no tan mayores practican ejercicio estático: bicicletas y remo sin moverse del sitio.</h4>"
+    },
+    {
+        "nombre": "Bosque de Olivos",
+        "lat": 40.7489, 
+        "lon": -3.5098,
+        "pista": "<h4>Bosque de olivos centenarios frente a la Cartuja de Talamanca. La Cartuja es una finca del siglo XVI que conserva la memoria arquitectónica y cultural de los frailes cartujos del Monasterio de El Paular.</h4>"
+    },
+    {
+        "nombre": "Adivinanza 1",
+        "lat": 40.7475, 
+        "lon": -3.5100,
+        "pista": "<h4>Vuelo sin alas, corro sin pies, bajo por un cable, ¿sabes quién es? (Busca el juego infantil que se desliza por un cable)</h4>"
+    },
+    {
+        "nombre": "Adivinanza 2", 
+        "lat": 40.7484, 
+        "lon": -3.5115,
+        "pista": "<h4>En el centro del patio mi canto despierta, brota del mármol el agua que acierta. No tengo garganta, pero murmuro, soy vieja y clara, espejo seguro. (Busca la fuente antigua)</h4>"
+    },
+    {
+        "nombre": "Fragmento Histórico",
+        "lat": 40.7487, 
+        "lon": -3.5122,
+        "pista": "<h4>Fragmento de piedra que guarda silencio, cicatriz del tiempo sobre la tierra. Fuiste muralla, guardiana de sueños, hoy sólo el viento te ronda y te nombra. (Busca los restos de la antigua muralla)</h4>"
+    }
 ]
 
 # Agregar marcadores con popups de Folium
 for t in tesoros:
     gmaps_link = f"https://www.google.com/maps/dir/?api=1&destination={t['lat']},{t['lon']}"
-    form_link = f"{google_form_link}?entry.123456={t['nombre']}"  # Reemplaza entry.123456 con tu campo real si quieres autocompletar
+    form_link = f"{google_form_link}&entry.123456={t['nombre']}"  # Ajusta el entry.123456 según tu formulario
+    
     popup_html = f"""
-    <b>{t['nombre']}</b><br>
-    {t['pista']}<br>
-    <a href='{gmaps_link}' target='_blank'>Ir aquí</a><br>
-    <a href='{form_link}' target='_blank'>Marcar como encontrado</a>
+    <div style="width: 300px;">
+        <b>{t['nombre']}</b><br><br>
+        {t['pista']}
+        <div style="margin-top: 15px;">
+            <a href='{gmaps_link}' target='_blank' style='background-color: #4CAF50; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block; margin-right: 10px;'>Ir aquí</a>
+            <a href='{form_link}' target='_blank' style='background-color: #2196F3; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;'>Marcar como encontrado</a>
+        </div>
+    </div>
     """
+    
     folium.Marker(
         location=[t["lat"], t["lon"]],
-        popup=popup_html,
-        icon=folium.Icon(color="blue", icon="star")
+        popup=folium.Popup(popup_html, max_width=400),
+        icon=folium.Icon(color="red", icon="flag", prefix="fa")
     ).add_to(m)
 
 # Convertir mapa a HTML para mostrar en Streamlit
 map_html = m._repr_html_()
 html(map_html, height=700)
+
+# Información adicional
+st.sidebar.markdown("### 🗺️ Instrucciones del Geocaching")
+st.sidebar.markdown("""
+1. **Haz clic en cualquier marcador** para ver la pista
+2. **Usa el botón 'Ir aquí'** para abrir Google Maps 
+3. **Busca el tesoro** en la ubicación indicada
+4. **Marca como encontrado** cuando lo encuentres
+
+**Recuerda:** Los tesoros pueden ser pequeños objetos o códigos QR.
+""")
