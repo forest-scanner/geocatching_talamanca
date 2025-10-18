@@ -9,8 +9,8 @@ st.title("Geocaching en Talamanca de Jarama")
 # Crear mapa centrado en Talamanca de Jarama
 m = folium.Map(location=[40.748, -3.511], zoom_start=16)
 
-# Link base del Google Form
-google_form_link = "https://docs.google.com/forms/d/1IjqaIbFe7ZZWdIJ4acgxYhxWQtu5vC7kdmYYsgYcPNg/prefill"
+# Link único del Google Form
+google_form_link = "https://docs.google.com/forms/d/e/1FAIpQLSdMk3kx-qkhmXvhBpI0m0Fo-EImLBDChoFP5oXf3gq4JokdnQ/viewform?usp=dialog"
 
 # URL base para las imágenes en GitHub
 github_image_base = "https://raw.githubusercontent.com/forest-scanner/geocatching_talamanca/main/"
@@ -78,7 +78,6 @@ tesoros = [
 # Agregar marcadores con popups de Folium que incluyen imágenes
 for t in tesoros:
     gmaps_link = f"https://www.google.com/maps/dir/?api=1&destination={t['lat']},{t['lon']}"
-    form_link = f"{google_form_link}&entry.123456={t['nombre']}"  # Ajusta el entry.123456 según tu formulario
     image_url = f"{github_image_base}{t['imagen']}"
     
     popup_html = f"""
@@ -90,7 +89,7 @@ for t in tesoros:
         {t['pista']}
         <div style="margin-top: 15px; text-align: center;">
             <a href='{gmaps_link}' target='_blank' style='background-color: #4CAF50; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block; margin-right: 10px;'>Ir aquí</a>
-            <a href='{form_link}' target='_blank' style='background-color: #2196F3; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;'>Marcar como encontrado</a>
+            <a href='{google_form_link}' target='_blank' style='background-color: #2196F3; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;'>Marcar como encontrado</a>
         </div>
     </div>
     """
@@ -130,5 +129,16 @@ st.sidebar.markdown("""
 
 ### 📸 ¡Novedad!
 Ahora cada marcador incluye una foto del lugar para ayudarte en tu búsqueda.
+
+### 📝 Formulario único
+Usa el mismo formulario para marcar cualquier tesoro como encontrado.
 """)
+
+# Añadir información sobre el formulario
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 📝 Enlace directo al formulario")
+st.sidebar.markdown(f"""
+[Acceder al formulario de tesoros encontrados]({google_form_link})
+""")
+
 
