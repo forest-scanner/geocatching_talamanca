@@ -16,11 +16,8 @@ m = folium.Map(
     location=[40.750, -3.515], 
     zoom_start=15,
     control_scale=True,
-    prefer_canvas=True  # Mejor rendimiento en móviles
+    tiles='OpenStreetMap'  # Usar tiles más ligeros para móviles
 )
-
-# Añadir plugin para hacer el mapa responsive
-m.add_child(folium.plugins.Responive())
 
 # Link único del Google Form
 google_form_link = "https://docs.google.com/forms/d/e/1FAIpQLSdMk3kx-qkhmXvhBpI0m0Fo-EImLBDChoFP5oXf3gq4JokdnQ/viewform?usp=dialog"
@@ -133,6 +130,11 @@ responsive_css = """
         height: 80vh !important;
         min-height: 500px;
     }
+    
+    /* Ajustar el título para móviles */
+    h1 {
+        font-size: 1.5rem !important;
+    }
 }
 
 /* Mejorar la visualización en pantallas pequeñas */
@@ -154,6 +156,14 @@ responsive_css = """
     width: 100%;
     height: 100%;
 }
+
+/* Botones más grandes para móviles */
+@media (max-width: 768px) {
+    .stButton button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
 </style>
 """
 
@@ -171,7 +181,7 @@ responsive_map_html = f"""
 """
 
 # Mostrar el mapa con configuración responsive
-html(responsive_map_html, height=600, scrolling=True)
+html(responsive_map_html, height=700)
 
 # Información adicional en un expander para ahorrar espacio en móviles
 with st.sidebar:
@@ -207,5 +217,6 @@ with st.sidebar:
 # Añadir un pequeño footer
 st.sidebar.markdown("---")
 st.sidebar.markdown("*Geocaching Talamanca de Jarama - ¡Disfruta explorando!*")
+
 
 
