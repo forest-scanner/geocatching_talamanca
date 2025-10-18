@@ -1,6 +1,7 @@
 import streamlit as st
 import folium
 from streamlit.components.v1 import html
+import json
 
 # Configuración de la app
 st.set_page_config(
@@ -141,7 +142,7 @@ responsive_css = """
     
     /* Asegurar que el iframe del mapa ocupe toda la pantalla */
     iframe {
-        height: 85vh !important;
+        height: 75vh !important;
         min-height: 450px;
     }
     
@@ -167,14 +168,8 @@ responsive_css = """
 /* Mejorar la visualización en pantallas muy pequeñas */
 @media (max-width: 480px) {
     iframe {
-        height: 80vh !important;
+        height: 70vh !important;
         min-height: 400px;
-    }
-    
-    /* Ajustar el sidebar para móviles */
-    section[data-testid="stSidebar"] {
-        min-width: 100% !important;
-        max-width: 100% !important;
     }
 }
 
@@ -190,38 +185,23 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Botones más grandes para móviles */
-@media (max-width: 768px) {
-    .stButton button {
-        width: 100%;
-        margin-bottom: 8px;
-        padding: 12px !important;
-        font-size: 16px !important;
-    }
-}
-
-/* Mejorar los enlaces en los popups para móviles */
-.leaflet-popup-content a {
-    font-size: 16px !important;
-    padding: 12px !important;
-    margin: 5px 0 !important;
-}
-
-/* Botón de ubicación fijo */
-.location-button {
-    position: absolute !important;
-    top: 10px !important;
-    right: 10px !important;
-    z-index: 1000 !important;
-    padding: 12px 15px !important;
+/* Estilo para el botón de ubicación */
+.gps-button {
     background-color: #28a745 !important;
     color: white !important;
     border: none !important;
     border-radius: 6px !important;
-    cursor: pointer !important;
-    font-size: 14px !important;
+    padding: 12px 20px !important;
+    font-size: 16px !important;
     font-weight: bold !important;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+    cursor: pointer !important;
+    margin-bottom: 10px !important;
+    width: 100% !important;
+}
+
+.gps-button:disabled {
+    background-color: #6c757d !important;
+    cursor: not-allowed !important;
 }
 </style>
 """
@@ -229,85 +209,87 @@ body {
 # Aplicar CSS
 st.markdown(responsive_css, unsafe_allow_html=True)
 
+# Botón de GPS nativo de Streamlit
+st.markdown("### 📍 Ubicación GPS")
+col1, col2 = st.columns([3, 1])
+with col1:
+    gps_button = st.button(
+        "📍 Activar GPS y Mostrar Mi Ubicación", 
+        key="gps_button",
+        use_container_width=True,
+        type="primary"
+    )
+
 # Convertir mapa a HTML para mostrar en Streamlit
 map_html = m._repr_html_()
 
-# Script JavaScript simplificado y mejorado
+# Script JavaScript simplificado para GPS
 gps_script = """
 <script>
-// Función para obtener la ubicación
-function getLocation() {
-    if (navigator.geolocation) {
-        // Cambiar texto del botón
-        var button = document.getElementById('gps-button');
-        if (button) {
-            button.innerHTML = '🔄 Buscando...';
-            button.disabled = true;
-        }
-        
-        // Obtener ubicación
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                showPosition(position);
-                // Restaurar botón
-                if (button) {
-                    button.innerHTML = '📍 Mi Ubicación';
-                    button.disabled = false;
-                }
-            },
-            function(error) {
-                handleLocationError(error);
-                // Restaurar botón
-                if (button) {
-                    button.innerHTML = '📍 Mi Ubicación';
-                    button.disabled = false;
-                }
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 60000
-            }
-        );
-    } else {
+// Variable global para el marcador
+var currentLocationMarker = null;
+
+// Función para obtener ubicación
+function getCurrentLocation() {
+    if (!navigator.geolocation) {
         alert("Tu navegador no soporta geolocalización.");
+        return;
     }
+    
+    // Mostrar mensaje de carga
+    console.log("Buscando ubicación...");
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            showPosition(position);
+        },
+        function(error) {
+            handleLocationError(error);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 60000
+        }
+    );
 }
 
 // Mostrar posición en el mapa
 function showPosition(position) {
     var lat = position.coords.latitude;
     var lon = position.coords.longitude;
+    var accuracy = position.coords.accuracy;
+    
+    console.log("Ubicación encontrada:", lat, lon);
     
     // Buscar el mapa de Leaflet
-    var mapElements = document.getElementsByClassName('folium-map');
-    if (mapElements.length === 0) {
-        alert("No se pudo encontrar el mapa. Recarga la página.");
+    var mapElement = document.querySelector('.folium-map');
+    if (!mapElement || !mapElement._leaflet_map) {
+        alert("Error: No se pudo acceder al mapa. Intenta recargar la página.");
         return;
     }
     
-    var map = mapElements[0]._leaflet_map;
+    var map = mapElement._leaflet_map;
     
     // Eliminar marcador anterior si existe
-    if (window.currentLocationMarker) {
-        map.removeLayer(window.currentLocationMarker);
+    if (currentLocationMarker) {
+        map.removeLayer(currentLocationMarker);
     }
     
-    // Crear icono personalizado
+    // Crear marcador verde para ubicación actual
     var greenIcon = L.divIcon({
-        html: '<div style="background-color: green; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5);"></div>',
+        html: '<div style="background-color: #28a745; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.5);"></div>',
         iconSize: [20, 20],
         className: 'current-location-marker'
     });
     
     // Añadir marcador
-    window.currentLocationMarker = L.marker([lat, lon], {icon: greenIcon}).addTo(map);
+    currentLocationMarker = L.marker([lat, lon], {icon: greenIcon}).addTo(map);
     
     // Añadir círculo de precisión
-    var accuracy = position.coords.accuracy;
     L.circle([lat, lon], {
-        color: 'green',
-        fillColor: '#30c230',
+        color: '#28a745',
+        fillColor: '#28a745',
         fillOpacity: 0.2,
         radius: accuracy
     }).addTo(map);
@@ -315,87 +297,107 @@ function showPosition(position) {
     // Centrar mapa en la ubicación
     map.setView([lat, lon], 16);
     
-    // Mostrar popup
-    window.currentLocationMarker.bindPopup(
+    // Añadir popup informativo
+    currentLocationMarker.bindPopup(
+        '<div style="text-align: center;">' +
         '<b>¡Estás aquí!</b><br>' +
         'Lat: ' + lat.toFixed(6) + '<br>' +
-        'Lon: ' + lon.toFixed(6)
+        'Lon: ' + lon.toFixed(6) + '<br>' +
+        '<small>Precisión: ±' + Math.round(accuracy) + 'm</small>' +
+        '</div>'
     ).openPopup();
     
-    console.log("Ubicación encontrada: " + lat + ", " + lon);
+    // Mostrar mensaje de éxito
+    alert("¡Ubicación encontrada! Se ha añadido un marcador verde en tu posición.");
 }
 
 // Manejar errores
 function handleLocationError(error) {
-    var message;
+    var message = "Error al obtener la ubicación: ";
+    
     switch(error.code) {
         case error.PERMISSION_DENIED:
-            message = "Permiso de ubicación denegado. Por favor, permite el acceso a tu ubicación en la configuración del navegador.";
+            message += "Has denegado el permiso de ubicación. Por favor, permite el acceso a tu ubicación en la configuración del navegador.";
             break;
         case error.POSITION_UNAVAILABLE:
-            message = "Información de ubicación no disponible.";
+            message += "La información de ubicación no está disponible. Verifica tu conexión y GPS.";
             break;
         case error.TIMEOUT:
-            message = "Tiempo de espera agotado al buscar la ubicación.";
+            message += "El tiempo de espera se agotó. Intenta de nuevo.";
             break;
         default:
-            message = "Error desconocido al obtener la ubicación.";
+            message += "Error desconocido.";
     }
-    alert("Error: " + message);
+    
+    alert(message);
+    console.error("Error de geolocalización:", error);
 }
 
-// Añadir botón al mapa
-function addLocationButton() {
-    // Esperar a que el mapa se cargue
-    setTimeout(function() {
-        var mapContainer = document.querySelector('.folium-map');
-        if (mapContainer) {
-            // Crear botón
-            var button = document.createElement('button');
-            button.id = 'gps-button';
-            button.className = 'location-button';
-            button.innerHTML = '📍 Mi Ubicación';
-            button.onclick = getLocation;
-            
-            // Añadir botón al mapa
-            mapContainer.appendChild(button);
-            console.log("Botón de ubicación añadido");
-        } else {
-            // Reintentar si no se encuentra el mapa
-            setTimeout(addLocationButton, 500);
-        }
-    }, 1000);
+// Ejecutar cuando se presiona el botón desde Streamlit
+if (window.streamlitButtonPressed !== undefined && window.streamlitButtonPressed) {
+    getCurrentLocation();
+    window.streamlitButtonPressed = false;
 }
 
-// Iniciar cuando se carga la página
-document.addEventListener('DOMContentLoaded', addLocationButton);
+// Escuchar mensajes desde Streamlit
+window.addEventListener('message', function(event) {
+    if (event.data.type === 'GET_LOCATION') {
+        getCurrentLocation();
+    }
+});
 </script>
 """
 
-# Combinar mapa HTML con el script
-full_map_html = f"""
-<div class="map-container">
-{map_html}
-</div>
-{gps_script}
-"""
+# Si se presionó el botón de GPS, activar el script
+if gps_button:
+    st.success("Buscando tu ubicación... Por favor, permite el acceso a tu ubicación cuando tu navegador lo solicite.")
+    
+    # Script para activar GPS cuando se carga la página
+    activation_script = """
+    <script>
+    window.streamlitButtonPressed = true;
+    // Pequeño retraso para asegurar que el mapa esté cargado
+    setTimeout(function() {
+        if (window.getCurrentLocation) {
+            window.getCurrentLocation();
+        }
+    }, 1000);
+    </script>
+    """
+    
+    # Combinar todo
+    full_html = f"""
+    <div class="map-container">
+    {map_html}
+    </div>
+    {gps_script}
+    {activation_script}
+    """
+else:
+    # Solo mostrar mapa y script sin activación
+    full_html = f"""
+    <div class="map-container">
+    {map_html}
+    </div>
+    {gps_script}
+    """
 
 # Mostrar el mapa
-html(full_map_html, height=700, scrolling=False)
+html(full_html, height=600)
 
-# Botón alternativo en Streamlit por si falla el JavaScript
-st.sidebar.markdown("### 📍 Alternativa para GPS")
+# Información sobre GPS en el sidebar
+st.sidebar.markdown("### 📍 Cómo usar el GPS")
 st.sidebar.markdown("""
-Si el botón de ubicación en el mapa no funciona, puedes:
+1. **Haz clic en el botón '📍 Activar GPS'** arriba del mapa
+2. **Permite el acceso** a tu ubicación cuando el navegador lo solicite
+3. **Espera** a que se procese tu ubicación
+4. **Verás** un marcador verde en el mapa con tu posición
 
-1. **Abrir Google Maps** para ver tu ubicación actual
-2. **Comparar manualmente** con los marcadores del mapa
-3. **Usar una app de mapas** externa para navegación
-
-**Solución de problemas:**
-- Asegúrate de que tu GPS esté activado
+**Si no funciona:**
+- Asegúrate de tener el GPS activado en tu dispositivo
 - Verifica los permisos de ubicación en tu navegador
 - Intenta en un área con mejor señal
+- Usa Chrome o Safari para mejor compatibilidad
 """)
 
 # Información adicional en el sidebar
@@ -432,6 +434,7 @@ with st.sidebar:
 # Añadir un pequeño footer
 st.sidebar.markdown("---")
 st.sidebar.markdown("*Geocaching Talamanca de Jarama - ¡Disfruta explorando!*")
+
 
 
 
