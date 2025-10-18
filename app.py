@@ -1,7 +1,6 @@
 import streamlit as st
 import folium
 from streamlit.components.v1 import html
-import json
 
 # Configuración de la app
 st.set_page_config(
@@ -211,23 +210,50 @@ st.markdown(responsive_css, unsafe_allow_html=True)
 
 # Botón de GPS nativo de Streamlit
 st.markdown("### 📍 Ubicación GPS")
-col1, col2 = st.columns([3, 1])
-with col1:
-    gps_button = st.button(
-        "📍 Activar GPS y Mostrar Mi Ubicación", 
-        key="gps_button",
-        use_container_width=True,
-        type="primary"
-    )
+gps_button = st.button(
+    "📍 Activar GPS y Mostrar Mi Ubicación", 
+    key="gps_button",
+    use_container_width=True,
+    type="primary"
+)
 
-# Convertir mapa a HTML para mostrar en Streamlit
+# Convertir mapa a HTML
 map_html = m._repr_html_()
 
-# Script JavaScript simplificado para GPS
+# Script JavaScript mejorado para GPS
 gps_script = """
 <script>
 // Variable global para el marcador
 var currentLocationMarker = null;
+
+// Función para obtener el mapa de Leaflet
+function getLeafletMap() {
+    // Buscar todos los elementos iframe que contengan mapas de Leaflet
+    var iframes = document.getElementsByTagName('iframe');
+    for (var i = 0; i < iframes.length; i++) {
+        try {
+            var iframe = iframes[i];
+            // Verificar si este iframe contiene un mapa de Leaflet
+            if (iframe.contentDocument && iframe.contentDocument.querySelector('.leaflet-container')) {
+                var leafletContainer = iframe.contentDocument.querySelector('.leaflet-container');
+                if (leafletContainer && leafletContainer._leaflet_map) {
+                    return leafletContainer._leaflet_map;
+                }
+            }
+        } catch (e) {
+            // Ignorar errores de acceso entre iframes
+            console.log("No se pudo acceder al iframe:", e);
+        }
+    }
+    
+    // Si no se encuentra en iframes, buscar directamente
+    var leafletContainer = document.querySelector('.leaflet-container');
+    if (leafletContainer && leafletContainer._leaflet_map) {
+        return leafletContainer._leaflet_map;
+    }
+    
+    return null;
+}
 
 // Función para obtener ubicación
 function getCurrentLocation() {
@@ -236,12 +262,19 @@ function getCurrentLocation() {
         return;
     }
     
+    // Obtener el mapa
+    var map = getLeafletMap();
+    if (!map) {
+        alert("Error: El mapa aún no está listo. Espera unos segundos y vuelve a intentarlo.");
+        return;
+    }
+    
     // Mostrar mensaje de carga
     console.log("Buscando ubicación...");
     
     navigator.geolocation.getCurrentPosition(
         function(position) {
-            showPosition(position);
+            showPosition(position, map);
         },
         function(error) {
             handleLocationError(error);
@@ -255,31 +288,22 @@ function getCurrentLocation() {
 }
 
 // Mostrar posición en el mapa
-function showPosition(position) {
+function showPosition(position, map) {
     var lat = position.coords.latitude;
     var lon = position.coords.longitude;
     var accuracy = position.coords.accuracy;
     
     console.log("Ubicación encontrada:", lat, lon);
     
-    // Buscar el mapa de Leaflet
-    var mapElement = document.querySelector('.folium-map');
-    if (!mapElement || !mapElement._leaflet_map) {
-        alert("Error: No se pudo acceder al mapa. Intenta recargar la página.");
-        return;
-    }
-    
-    var map = mapElement._leaflet_map;
-    
     // Eliminar marcador anterior si existe
     if (currentLocationMarker) {
         map.removeLayer(currentLocationMarker);
     }
     
-    // Crear marcador verde para ubicación actual
+    // Crear icono personalizado para ubicación actual
     var greenIcon = L.divIcon({
         html: '<div style="background-color: #28a745; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.5);"></div>',
-        iconSize: [20, 20],
+        iconSize: [25, 25],
         className: 'current-location-marker'
     });
     
@@ -299,7 +323,7 @@ function showPosition(position) {
     
     // Añadir popup informativo
     currentLocationMarker.bindPopup(
-        '<div style="text-align: center;">' +
+        '<div style="text-align: center; min-width: 200px;">' +
         '<b>¡Estás aquí!</b><br>' +
         'Lat: ' + lat.toFixed(6) + '<br>' +
         'Lon: ' + lon.toFixed(6) + '<br>' +
@@ -309,6 +333,9 @@ function showPosition(position) {
     
     // Mostrar mensaje de éxito
     alert("¡Ubicación encontrada! Se ha añadido un marcador verde en tu posición.");
+    
+    // Mostrar coordenadas en la consola
+    console.log("Tus coordenadas:", lat, lon);
 }
 
 // Manejar errores
@@ -333,18 +360,21 @@ function handleLocationError(error) {
     console.error("Error de geolocalización:", error);
 }
 
-// Ejecutar cuando se presiona el botón desde Streamlit
-if (window.streamlitButtonPressed !== undefined && window.streamlitButtonPressed) {
-    getCurrentLocation();
-    window.streamlitButtonPressed = false;
+// Función para inicializar cuando se presiona el botón
+function initGPS() {
+    console.log("Inicializando GPS...");
+    
+    // Esperar un momento para asegurar que el mapa esté cargado
+    setTimeout(function() {
+        getCurrentLocation();
+    }, 500);
 }
 
-// Escuchar mensajes desde Streamlit
-window.addEventListener('message', function(event) {
-    if (event.data.type === 'GET_LOCATION') {
-        getCurrentLocation();
-    }
-});
+// Verificar si debemos ejecutar el GPS automáticamente
+if (window.autoStartGPS) {
+    initGPS();
+    window.autoStartGPS = false;
+}
 </script>
 """
 
@@ -355,13 +385,14 @@ if gps_button:
     # Script para activar GPS cuando se carga la página
     activation_script = """
     <script>
-    window.streamlitButtonPressed = true;
-    // Pequeño retraso para asegurar que el mapa esté cargado
-    setTimeout(function() {
-        if (window.getCurrentLocation) {
-            window.getCurrentLocation();
-        }
-    }, 1000);
+    // Esperar a que la página esté completamente cargada
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            window.autoStartGPS = true;
+        });
+    } else {
+        window.autoStartGPS = true;
+    }
     </script>
     """
     
@@ -393,11 +424,14 @@ st.sidebar.markdown("""
 3. **Espera** a que se procese tu ubicación
 4. **Verás** un marcador verde en el mapa con tu posición
 
-**Si no funciona:**
-- Asegúrate de tener el GPS activado en tu dispositivo
-- Verifica los permisos de ubicación en tu navegador
-- Intenta en un área con mejor señal
-- Usa Chrome o Safari para mejor compatibilidad
+**Si ves el error 'mapa no está listo':**
+- Espera 2-3 segundos después de que cargue el mapa
+- Vuelve a hacer clic en el botón
+- Recarga la página si es necesario
+
+**Coordenadas:**
+- Se mostrarán en un popup sobre el marcador verde
+- También puedes verlas en la consola del navegador (F12)
 """)
 
 # Información adicional en el sidebar
