@@ -1,5 +1,6 @@
 import streamlit as st
 import folium
+from folium.plugins import LocateControl
 from streamlit.components.v1 import html
 
 # Configuración de la app
@@ -18,6 +19,17 @@ m = folium.Map(
     control_scale=True,
     tiles='OpenStreetMap'
 )
+
+# Añadir control de localización personalizado
+LocateControl(
+    auto_start=False,
+    draw_circle=True,
+    show_popup=True,
+    strings={
+        "title": "Mostrar mi ubicación",
+        "popup": "¡Estás aquí!"
+    }
+).add_to(m)
 
 # Link único del Google Form
 google_form_link = "https://docs.google.com/forms/d/e/1FAIpQLSdMk3kx-qkhmXvhBpI0m0Fo-EImLBDChoFP5oXf3gq4JokdnQ/viewform?usp=dialog"
@@ -127,166 +139,6 @@ for t in tesoros:
         icon=folium.Icon(color=icon_color, icon="flag", prefix="fa")
     ).add_to(m)
 
-# Script JavaScript mejorado para la geolocalización
-location_script = """
-<script>
-// Variable global para el marcador de ubicación
-var currentLocationMarker = null;
-
-// Función para obtener la ubicación actual
-function getLocation() {
-    if (navigator.geolocation) {
-        // Mostrar indicador de carga
-        var button = document.getElementById('location-button');
-        if (button) {
-            button.innerHTML = '🔄 Buscando...';
-            button.disabled = true;
-        }
-        
-        navigator.geolocation.getCurrentPosition(
-            showPosition, 
-            showError, 
-            {
-                enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 60000
-            }
-        );
-    } else {
-        alert("La geolocalización no es compatible con este navegador.");
-    }
-}
-
-// Función para mostrar la posición en el mapa
-function showPosition(position) {
-    var lat = position.coords.latitude;
-    var lon = position.coords.longitude;
-    var accuracy = position.coords.accuracy;
-    
-    console.log("Coordenadas obtenidas: " + lat + ", " + lon);
-    
-    // Obtener referencia al mapa de Leaflet
-    var mapElement = document.querySelector('.folium-map');
-    if (!mapElement || !mapElement._leaflet_map) {
-        alert("Error: No se pudo acceder al mapa. Intenta recargar la página.");
-        resetButton();
-        return;
-    }
-    
-    var map = mapElement._leaflet_map;
-    
-    // Eliminar marcador anterior si existe
-    if (currentLocationMarker) {
-        map.removeLayer(currentLocationMarker);
-    }
-    
-    // Crear un icono personalizado para la ubicación actual
-    var greenIcon = L.icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-    });
-    
-    // Crear un marcador para la ubicación actual
-    currentLocationMarker = L.marker([lat, lon], {icon: greenIcon}).addTo(map);
-    
-    // Crear un círculo para mostrar la precisión
-    var accuracyCircle = L.circle([lat, lon], {
-        color: 'green',
-        fillColor: '#30c230',
-        fillOpacity: 0.2,
-        radius: accuracy
-    }).addTo(map);
-    
-    // Añadir popup al marcador
-    currentLocationMarker.bindPopup(
-        "<b>¡Estás aquí!</b><br>" +
-        "Tu ubicación actual<br>" +
-        "Lat: " + lat.toFixed(6) + "<br>" +
-        "Lon: " + lon.toFixed(6) + "<br>" +
-        "Precisión: ±" + Math.round(accuracy) + " metros"
-    ).openPopup();
-    
-    // Centrar el mapa en la ubicación actual
-    map.setView([lat, lon], 16);
-    
-    // Restaurar el botón
-    resetButton();
-    
-    // Mostrar mensaje de éxito
-    alert("¡Ubicación encontrada! Se ha añadido un marcador verde en tu posición.");
-}
-
-// Función para manejar errores de geolocalización
-function showError(error) {
-    console.error("Error de geolocalización: ", error);
-    
-    var errorMessage;
-    switch(error.code) {
-        case error.PERMISSION_DENIED:
-            errorMessage = "Has denegado el permiso para acceder a tu ubicación. Para usar esta función, por favor permite el acceso a la ubicación en la configuración de tu navegador.";
-            break;
-        case error.POSITION_UNAVAILABLE:
-            errorMessage = "La información de ubicación no está disponible. Verifica tu conexión a Internet o GPS.";
-            break;
-        case error.TIMEOUT:
-            errorMessage = "La solicitud para obtener la ubicación ha caducado. Intenta de nuevo.";
-            break;
-        case error.UNKNOWN_ERROR:
-            errorMessage = "Ocurrió un error desconocido al obtener la ubicación.";
-            break;
-    }
-    
-    alert("Error: " + errorMessage);
-    resetButton();
-}
-
-// Función para restaurar el botón a su estado original
-function resetButton() {
-    var button = document.getElementById('location-button');
-    if (button) {
-        button.innerHTML = '📍 Mostrar mi ubicación';
-        button.disabled = false;
-    }
-}
-
-// Inicializar cuando se carga la página
-document.addEventListener('DOMContentLoaded', function() {
-    // Esperar a que el mapa se cargue completamente
-    setTimeout(function() {
-        // Crear y añadir botón para obtener ubicación
-        var button = document.createElement('button');
-        button.id = 'location-button';
-        button.innerHTML = '📍 Mostrar mi ubicación';
-        button.style.position = 'absolute';
-        button.style.top = '10px';
-        button.style.right = '10px';
-        button.style.zIndex = '1000';
-        button.style.padding = '12px 15px';
-        button.style.backgroundColor = '#28a745';
-        button.style.color = 'white';
-        button.style.border = 'none';
-        button.style.borderRadius = '6px';
-        button.style.cursor = 'pointer';
-        button.style.fontSize = '14px';
-        button.style.fontWeight = 'bold';
-        button.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-        button.onclick = getLocation;
-        
-        // Añadir el botón al contenedor del mapa
-        var mapContainer = document.querySelector('.folium-map');
-        if (mapContainer) {
-            mapContainer.style.position = 'relative';
-            mapContainer.appendChild(button);
-        }
-    }, 1000);
-});
-</script>
-"""
-
 # CSS personalizado mejorado para móviles
 responsive_css = """
 <style>
@@ -336,12 +188,6 @@ responsive_css = """
         min-width: 100% !important;
         max-width: 100% !important;
     }
-    
-    /* Botón de ubicación más pequeño en móviles muy pequeños */
-    button {
-        font-size: 12px !important;
-        padding: 10px 12px !important;
-    }
 }
 
 /* Asegurar que el mapa sea responsive */
@@ -372,12 +218,6 @@ body {
     padding: 12px !important;
     margin: 5px 0 !important;
 }
-
-/* Estilo para el botón de ubicación cuando está deshabilitado */
-button:disabled {
-    background-color: #6c757d !important;
-    cursor: not-allowed !important;
-}
 </style>
 """
 
@@ -387,12 +227,11 @@ st.markdown(responsive_css, unsafe_allow_html=True)
 # Convertir mapa a HTML para mostrar en Streamlit
 map_html = m._repr_html_()
 
-# Envolver el mapa en un contenedor con ID para el script
+# Envolver el mapa en un contenedor
 responsive_map_html = f"""
 <div class="map-container">
 {map_html}
 </div>
-{location_script}
 """
 
 # Mostrar el mapa con configuración responsive
@@ -403,10 +242,10 @@ st.sidebar.markdown("### 📍 Mi Ubicación")
 st.sidebar.markdown("""
 **Cómo usar la ubicación:**
 
-1. Haz clic en el botón **📍 Mostrar mi ubicación** en el mapa
-2. Permite el acceso a tu ubicación cuando el navegador lo solicite
-3. Verás un marcador verde con tu posición exacta
-4. El mapa se centrará automáticamente en tu ubicación
+Haz clic en el botón de ubicación (el círculo con una flecha) en el mapa para:
+- Activar la geolocalización
+- Centrar el mapa en tu ubicación actual
+- Ver un marcador con tu posición
 
 **Si no funciona:**
 - Asegúrate de tener el GPS activado
@@ -414,40 +253,9 @@ st.sidebar.markdown("""
 - Comprueba que estás en un entorno HTTPS (necesario para geolocalización)
 """)
 
-# Información adicional en un expander para ahorrar espacio en móviles
-with st.sidebar:
-    with st.expander("🗺️ Instrucciones del Geocaching", expanded=False):
-        st.markdown("""
-        1. **Haz clic en cualquier marcador** para ver la pista y una imagen del lugar
-        2. **Usa el botón 'Ir aquí'** para abrir Google Maps 
-        3. **Busca el tesoro** en la ubicación indicada
-        4. **Marca como encontrado** cuando lo encuentres
+# ... (el resto del sidebar)
 
-        **Recuerda:** Los tesoros pueden ser pequeños objetos o códigos QR.
-        """)
-    
-    with st.expander("📍 Tesoros Disponibles", expanded=False):
-        st.markdown("""
-        - **Puente de Madera** - Río Jarama
-        - **Puente Romano** - Peaje histórico  
-        - **El Ancla** - Adivinanza
-        - **Bosque de Olivos** - Cartuja
-        - **Adivinanza 1** - Juego infantil
-        - **Adivinanza 2** - Fuente antigua
-        - **Fragmento Histórico** - Muralla
-        - **Ermita de los Milagros** ✨
-        """)
-    
-    with st.expander("📝 Formulario", expanded=False):
-        st.markdown(f"""
-        Usa el mismo formulario para marcar cualquier tesoro como encontrado.
-        
-        [Acceder al formulario]({google_form_link})
-        """)
 
-# Añadir un pequeño footer
-st.sidebar.markdown("---")
-st.sidebar.markdown("*Geocaching Talamanca de Jarama - ¡Disfruta explorando!*")
 
 
 
