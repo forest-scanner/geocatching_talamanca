@@ -49,14 +49,14 @@ tesoros = [
         "nombre": "Adivinanza 1",
         "lat": 40.74546455716086, 
         "lon": -3.5119383775703725,
-        "pista": "<h4>Vuelo sin alas, corro sin pies, bajo por un cable, ¿sabes quién es? (Busca el juego infantil que se desliza por un cable)</h4>",
+        "pista": "<h4>Vuelo sin alas, corro sin pies, bajo por un cable, ¿sabes quién es? </h4>",
         "imagen": "lugar5.JPG"
     },
     {
         "nombre": "Adivinanza 2", 
         "lat": 40.74530341700391, 
         "lon": -3.5125995134186145,
-        "pista": "<h4>En el centro del patio mi canto despierta, brota del mármol el agua que acierta. No tengo garganta, pero murmuro, soy vieja y clara, espejo seguro. (Busca la fuente antigua)</h4>",
+        "pista": "<h4>En el centro del patio mi canto despierta, brota del mármol el agua que acierta. No tengo garganta, pero murmuro, soy vieja y clara, espejo seguro. </h4>",
         "imagen": "lugar6.JPG"
     },
     {
@@ -144,3 +144,4 @@ st.sidebar.markdown(f"""
 # Añadir un pequeño footer
 st.sidebar.markdown("---")
 st.sidebar.markdown("*Geocaching Talamanca de Jarama - ¡Disfruta explorando!*")
+
